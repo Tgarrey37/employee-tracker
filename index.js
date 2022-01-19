@@ -76,7 +76,7 @@ const firstPrompt = () => {
           break;
 
         case "Quit":
-          quit();
+          db.end();
           break;
       }
     });
@@ -98,56 +98,191 @@ const viewAllEmployees = () => {
 };
 
 const addEmployee = () => {
-let query =  `SELECT role.id, role.title, role.salary 
-FROM role `
+  let query = `SELECT role.id, role.title, role.salary 
+FROM role `;
 
-db.query(query, (err,res) =>{
+  db.query(query, (err, res) => {
     if (err) throw err;
 
-    const roleChoices = res.map(({id, title, salary})) ({
-        value: id, title: `${title}`, salary: `${salary}`
-    });
+    const roleChoices = res.map(({ id, title, salary }) =>({
+      value: id,
+      title: `${title}`,
+      salary: `${salary}`,
+    }));
     console.table(res);
     promptInsert(roleChoices);
-})
-}
+  });
+};
 
 const promptInsert = (roleChoices) => {
-inquirer 
-.prompt ([{
-    type: "input",
-    name: "first_name",
-    message: "What is the Employee's first name?"
-},
-{
-    type: "input",
-    name: "last_name",
-    message: "What is the Employee's last name?"
-},
-{
-    type: "list",
-    name: "roleId",
-    message: "What is the Employees role?",
-    choices: roleChoices
-},
-])
-    .then((answer)=>{
-        console.log(answer);
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "first_name",
+        message: "What is the Employee's first name?",
+      },
+      {
+        type: "input",
+        name: "last_name",
+        message: "What is the Employee's last name?",
+      },
+      {
+        type: "list",
+        name: "roleId",
+        message: "What is the Employees role?",
+        choices: roleChoices,
+      },
+    ])
+    .then((answer) => {
+      console.log(answer);
 
-        let query = `insert into employee set ?`
-        db.query(query, {
-            first_name: answer.first_name,
-            last_name: answer.last_name,
-            role_id: answer.role_id,
-            manager_id: answer.manager_id
+      let query = `insert into employee set ?`;
+      db.query(
+        query,
+        {
+          first_name: answer.first_name,
+          last_name: answer.last_name,
+          role_id: answer.role_id,
+          manager_id: answer.manager_id,
         },
-        (err,res) =>{
-            if (err) throw err;
+        (err, res) => {
+          if (err) throw err;
 
-            console.table(res);
-            firstPrompt();
+          console.table(res);
+          firstPrompt();
         }
-        )
+      );
+    });
+};
+//  update employee role
+const updateEmployeeRole = () => {
+  let roleQuery = `select * from role`;
+  db.query(roleQuery, (err, res) => {
+    if (err) throw err;
+    const roleArray = res.map(({ id, title }) => ({ name: title, value: id }));
+    console.log(roleArray);
+    let employeeQuery = `select * from employee`;
+    db.query(employeeQuery, (err, res) => {
+      if (err) throw err;
+      const employeeArray = res.map(({ id, first_name, last_name }) => ({
+        name: `${first_name} ${last_name}`,
+        value: id,
+      }));
+      console.log(employeeArray);
+      promptEmployeeRole(employeeArray, roleArray);
+    });
+  });
+};
+
+//  employee and role arrays to prompt user with info
+function promptEmployeeRole(empArr, roleArr) {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "employeeId",
+        message: "Which employee do you want to set for the role",
+        choices: empArr,
+      },
+      {
+        type: "list",
+        name: "roleId",
+        message: " Which role do you want to update",
+        choices: roleArr,
+      },
+    ])
+    .then((answer) => {
+      let query = `update employee set role_id = ? where id = ?`;
+      db.query(query, [answer.roleId, answer.employeeId], (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        firstPrompt();
+      });
     });
 }
 
+const viewAllRoles = () => {
+  let query = `select * from role`;
+  db.query(query, (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    firstPrompt();
+  });
+};
+
+const viewAllDepartments = () => {
+  let query = `select * from department`;
+  db.query(query, (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    firstPrompt();
+  });
+};
+
+const addRole = () => {
+  let query = `select * from department `;
+  db.query(query, (err, res) => {
+    if (err) throw err;
+
+    const departmentChoices = res.map(({ id, name }) => ({
+      value: id,
+      name: `${id} ${name}`
+    }));
+    console.table(res);
+    promptAddRole(departmentChoices);
+  });
+};
+
+  const promptAddRole = (departmentChoices) =>{
+    inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "roleTitle",
+        message: "What is your Role Title ?"
+
+      },
+      {
+        type: "input",
+        name: "roleSalary",
+        message: "What is your role Salary?"
+      },
+      {
+        type: "list",
+        name: "departmentId",
+        message: "Department?",
+        choices: departmentChoices
+      },
+
+    ]) .then((answer)=>{
+      let query = `insert into role set ?`
+
+      db.query(query, {
+        title: answer.title,
+        salary: answer.salary,
+        department_id: answer.department_id
+      },
+      (err, res) => {
+        if (err) throw err;
+
+        console.table(res);
+        firstPrompt();
+      });
+    })
+  }
+
+    // const addDepartment = () =>{
+    //   inquirer
+    //   .prompt([
+    //     {
+    //       type: "input",
+    //       name: "department.name",
+    //       message: "What is the name of the department?"
+    //     }
+    //   ]).then((answer)=>{
+    //     let query = `insert into departments set ?`;
+    //     db.query(query,)
+    //   })
+      
+    // }
