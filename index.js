@@ -133,6 +133,11 @@ const promptInsert = (roleChoices) => {
         message: "What is the Employees role?",
         choices: roleChoices,
       },
+      {
+        name: 'manager_id',
+        type: 'input', 
+        message: "What is the employee's manager's ID? "
+    },
     ])
     .then((answer) => {
       console.log(answer);
@@ -272,17 +277,26 @@ const addRole = () => {
     })
   }
 
-    // const addDepartment = () =>{
-    //   inquirer
-    //   .prompt([
-    //     {
-    //       type: "input",
-    //       name: "department.name",
-    //       message: "What is the name of the department?"
-    //     }
-    //   ]).then((answer)=>{
-    //     let query = `insert into departments set ?`;
-    //     db.query(query,)
-    //   })
-      
-    // }
+  function addDepartment() { 
+
+    inquirer.prompt([
+        {
+          name: "name",
+          type: "input",
+          message: "What Department would you like to add?"
+        }
+    ]).then(function(res) {
+        var query = db.query(
+            "INSERT INTO department SET ? ",
+            {
+              name: res.name
+            
+            },
+            function(err) {
+                if (err) throw err
+                console.table(res);
+                firstPrompt();
+            }
+        )
+    })
+  }
